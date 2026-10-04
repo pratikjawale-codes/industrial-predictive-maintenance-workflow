@@ -1,0 +1,39 @@
+name: GE Industrial AI Platform CI/CD
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-and-validate:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+
+    - name: Run Data Quality, Feature & Model Tests
+      run: |
+        pytest tests/ -v --junitxml=test-results.xml
+
+    - name: Run Point-in-Time Training & Calibration Pipeline
+      run: |
+        python pipelines/training/train_pipeline.py
+
+    - name: Build Docker Container
+      run: |
+        docker build -t ge-predictive-maintenance:ci-test -f infra/docker/Dockerfile .

@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  predictive-maintenance-api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile
+    container_name: ge-predictive-maintenance-app
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - MODEL_VERSION=v2.4.1-champion
+      - LOG_LEVEL=info
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/live', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '0.5'
+          memory: 1G

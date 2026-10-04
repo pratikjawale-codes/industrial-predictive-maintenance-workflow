@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GE Industrial AI Predictive Maintenance Platform</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            ge: {
+              navy: '#0b192c',
+              slate: '#1e293b',
+              accent: '#0284c7',
+              cyan: '#06b6d4',
+              warning: '#f59e0b',
+              critical: '#ef4444',
+              success: '#10b981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background:
+        radial-gradient(ellipse at 15% -10%, rgba(14, 116, 144, 0.16), transparent 36rem),
+        radial-gradient(ellipse at 100% 0%, rgba(37, 99, 235, 0.12), transparent 32rem),
+        #0b1320;
+      color: #f1f5f9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .glass-card {
+      background: linear-gradient(145deg, rgba(20, 34, 55, 0.96), rgba(13, 24, 41, 0.94));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(12px);
+      border-radius: 0.75rem;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(56, 189, 248, 0.4);
+      transform: translateY(-1px);
+      transition: all 0.2s ease-in-out;
+    }
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 78% 0%, rgba(34, 211, 238, 0.19), transparent 24rem),
+        linear-gradient(115deg, rgba(17, 36, 61, 0.98), rgba(12, 24, 43, 0.96) 58%, rgba(13, 37, 58, 0.92));
+      border: 1px solid rgba(125, 211, 252, 0.16);
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+    }
+    .hero-panel::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 0 52%;
+      pointer-events: none;
+      opacity: 0.32;
+      background-image: linear-gradient(rgba(125, 211, 252, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(125, 211, 252, 0.08) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(90deg, transparent, black);
+    }
+    .hero-orb {
+      position: absolute;
+      width: 19rem;
+      height: 19rem;
+      right: 7%;
+      top: -9rem;
+      border: 1px solid rgba(103, 232, 249, 0.16);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2.5rem rgba(103, 232, 249, 0.025), 0 0 0 5rem rgba(103, 232, 249, 0.02);
+    }
+    .eyebrow {
+      color: #67e8f9;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+    .metric-card {
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+    .metric-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(125, 211, 252, 0.28);
+    }
+    button, a, select, textarea, input {
+      transition: border-color 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+    }
+    button:focus-visible, a:focus-visible, select:focus-visible,
+    textarea:focus-visible, input:focus-visible {
+      outline: 2px solid #38bdf8;
+      outline-offset: 2px;
+    }
+    #app-notice:empty { display: none; }
+    @media (max-width: 767px) {
+      header { align-items: flex-start; }
+      header h1 { font-size: 0.9rem; }
+      main { padding: 1rem !important; }
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b1320;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    .pulse-dot {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: .5; transform: scale(1.15); }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- TOP HEADER -->
+  <header class="border-b border-slate-800 bg-[#0f1a2e]/95 sticky top-0 z-50 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 shadow-lg backdrop-blur-xl">
+    <div class="flex items-center space-x-4">
+      <div class="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-xl tracking-wider text-white shadow-md shadow-blue-500/30">
+        GE
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <h1 class="text-lg font-bold tracking-tight text-white">AI PREDICTIVE MAINTENANCE PLATFORM</h1>
+          <span class="text-xs font-semibold px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 border border-blue-700/50">DEMO v2.4</span>
+        </div>
+        <p class="text-xs text-slate-400">Sample telemetry • Failure risk • RUL • Maintenance workflow</p>
+      </div>
+    </div>
+
+    <!-- System Indicators -->
+    <div class="flex flex-wrap items-center gap-2 md:gap-4 text-sm">
+      <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+        <span class="h-2.5 w-2.5 rounded-full bg-emerald-500 pulse-dot"></span>
+        <span class="text-xs font-medium text-slate-300">Telemetry: <strong class="text-emerald-400">SIMULATED</strong></span>
+      </div>
+      <div class="flex items-center space-x-2 bg-slate-800/80 px-3 py-1.5 rounded-lg border border-slate-700">
+        <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
+        <span class="text-xs font-medium text-slate-300">Demo model: <strong class="text-cyan-300">v2.4.1</strong></span>
+      </div>
+      <a href="/docs" target="_blank" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-medium text-xs shadow transition">
+        <i data-lucide="file-code" class="w-4 h-4"></i>
+        <span>REST API Docs</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="border-b border-slate-800/80 bg-[#0c1626] px-6 py-2 flex items-center space-x-2 overflow-x-auto">
+    <button onclick="switchTab('fleet')" id="tab-fleet" class="tab-btn px-4 py-2 text-sm font-semibold rounded-lg bg-blue-600/20 text-blue-400 border border-blue-500/40 flex items-center space-x-2">
+      <i data-lucide="layers" class="w-4 h-4"></i>
+      <span>Fleet Operations</span>
+    </button>
+    <button onclick="switchTab('asset')" id="tab-asset" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 flex items-center space-x-2">
+      <i data-lucide="activity" class="w-4 h-4"></i>
+      <span>Asset Digital Twin & Telemetry</span>
+    </button>
+    <button onclick="switchTab('simulator')" id="tab-simulator" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 flex items-center space-x-2">
+      <i data-lucide="play-circle" class="w-4 h-4"></i>
+      <span>Fault Simulator & What-If</span>
+    </button>
+    <button onclick="switchTab('alerts')" id="tab-alerts" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 flex items-center space-x-2">
+      <i data-lucide="alert-triangle" class="w-4 h-4"></i>
+      <span>Alert Center & SAP PM</span>
+      <span id="badge-alert-count" class="ml-1 px-1.5 py-0.2 text-xs rounded-full bg-red-600 text-white font-bold">2</span>
+    </button>
+    <button onclick="switchTab('copilot')" id="tab-copilot" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 flex items-center space-x-2">
+      <i data-lucide="sparkles" class="w-4 h-4 text-purple-400"></i>
+      <span>GE Copilot (RAG)</span>
+    </button>
+    <button onclick="switchTab('mlops')" id="tab-mlops" class="tab-btn px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 flex items-center space-x-2">
+      <i data-lucide="git-merge" class="w-4 h-4"></i>
+      <span>MLOps & Drift Governance</span>
+    </button>
+  </nav>
+
+  <div id="app-notice" role="status" aria-live="polite" class="hidden mx-6 mt-4 rounded-lg border px-4 py-3 text-sm"></div>
+
+  <!-- MAIN VIEWPORT -->
+  <main class="flex-1 p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: FLEET OVERVIEW -->
+    <!-- ============================================================ -->
+    <div id="view-fleet" class="tab-view space-y-6">
+      <section class="hero-panel rounded-2xl px-6 py-7 md:px-9 md:py-9">
+        <div class="hero-orb"></div>
+        <div class="relative z-10 max-w-3xl">
+          <div class="eyebrow flex items-center gap-2">
+            <span class="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_12px_#67e8f9]"></span>
+            Operations intelligence · sample environment
+          </div>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+            Keep critical assets<br class="hidden sm:block"> one step ahead.
+          </h2>
+          <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
+            Turn equipment signals into clear risk, remaining-life, and maintenance decisions.
+            Explore a connected demo workflow across five sample assets.
+          </p>
+          <div class="mt-6 flex flex-wrap items-center gap-3">
+            <button onclick="switchTab('asset')" class="inline-flex items-center gap-2 rounded-lg bg-cyan-400 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-cyan-950/40 hover:bg-cyan-300">
+              <i data-lucide="activity" class="h-4 w-4"></i>
+              Explore asset health
+            </button>
+            <button onclick="switchTab('simulator')" class="inline-flex items-center gap-2 rounded-lg border border-slate-500/50 bg-slate-900/40 px-4 py-2.5 text-sm font-semibold text-slate-100 hover:border-cyan-300/60 hover:bg-slate-800/70">
+              <i data-lucide="flask-conical" class="h-4 w-4"></i>
+              Try fault simulator
+            </button>
+            <span class="text-xs text-slate-400">Demo data only · not connected to live equipment</span>
+          </div>
+        </div>
+        <div class="relative z-10 mt-7 grid max-w-3xl grid-cols-3 gap-3 border-t border-slate-600/40 pt-5 md:absolute md:bottom-8 md:right-8 md:mt-0 md:w-[24rem] md:border-l md:border-t-0 md:pl-6">
+          <div><div class="eyebrow">HORIZONS</div><div class="mt-1 text-lg font-semibold text-white">24h–14d</div></div>
+          <div><div class="eyebrow">SIGNALS</div><div class="mt-1 text-lg font-semibold text-white">Multi-sensor</div></div>
+          <div><div class="eyebrow">LOOP</div><div class="mt-1 text-lg font-semibold text-white">Human-led</div></div>
+        </div>
+      </section>
+
+      <!-- Executive KPI Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card metric-card p-5 border-l-4 border-l-blue-500">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>ILLUSTRATIVE ANNUAL SAVINGS</span>
+            <i data-lucide="dollar-sign" class="w-4 h-4 text-blue-400"></i>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="kpi-savings">$5,200,000</div>
+          <div class="mt-1 flex items-center text-xs text-emerald-400">
+            <i data-lucide="trending-up" class="w-3.5 h-3.5 mr-1"></i>
+            <span id="kpi-downtime">42% illustrative reduction</span>
+          </div>
+        </div>
+
+        <div class="glass-card metric-card p-5 border-l-4 border-l-cyan-500">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>MONITORED INDUSTRIAL FLEET</span>
+            <i data-lucide="server" class="w-4 h-4 text-cyan-400"></i>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="kpi-assets">5 <span class="text-sm font-normal text-slate-400">sample assets</span></div>
+          <div class="mt-1 text-xs text-slate-400"><span id="kpi-plants">5 sample sites</span> · target scale 15,000</div>
+        </div>
+
+        <div class="glass-card metric-card p-5 border-l-4 border-l-amber-500">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>PREDICTION LEAD TIME</span>
+            <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight">11.2 <span class="text-sm font-normal text-slate-400">Days</span></div>
+          <div class="mt-1 text-xs text-amber-400">Target Range: 7 – 14 Days Met</div>
+        </div>
+
+        <div class="glass-card metric-card p-5 border-l-4 border-l-emerald-500">
+          <div class="flex items-center justify-between text-slate-400 text-xs font-medium">
+            <span>DEMO ALERT RATE</span>
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight">1.4 <span class="text-xs font-normal text-slate-400">/100 machines/mo</span></div>
+          <div class="mt-1 text-xs text-emerald-400">Illustrative target metric</div>
+        </div>
+      </div>
+
+      <!-- Fleet Asset Table -->
+      <div class="glass-card p-5 md:p-6">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div class="eyebrow">Fleet intelligence</div>
+            <h2 class="mt-1 text-lg font-semibold tracking-tight text-white">Asset health overview</h2>
+            <p class="mt-1 text-xs text-slate-400">Select an asset to inspect its risk horizons, sensor evidence, and recommended action.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <label class="sr-only" for="fleet-search">Filter assets</label>
+            <div class="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900/70 px-3 py-2">
+              <i data-lucide="search" class="h-3.5 w-3.5 text-slate-500"></i>
+              <input id="fleet-search" oninput="filterFleetRows()" type="search" placeholder="Find asset or site"
+                class="w-36 bg-transparent text-xs text-white placeholder:text-slate-500 focus:outline-none sm:w-48">
+            </div>
+            <button onclick="loadFleetData()" class="px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 flex items-center gap-1.5 border border-slate-700">
+              <i data-lucide="refresh-cw" class="h-3.5 w-3.5"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Asset ID & Name</th>
+                <th class="py-3 px-4">Plant Facility</th>
+                <th class="py-3 px-4">Family / Criticality</th>
+                <th class="py-3 px-4">Health Index</th>
+                <th class="py-3 px-4">Risk (7-Day)</th>
+                <th class="py-3 px-4">RUL (P50)</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="fleet-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: ASSET DIGITAL TWIN & TELEMETRY -->
+    <!-- ============================================================ -->
+    <div id="view-asset" class="tab-view hidden space-y-6">
+      <!-- Asset Selector Bar -->
+      <div class="glass-card p-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <label class="text-xs font-semibold text-slate-400 uppercase">Select Target Asset:</label>
+          <select id="asset-selector" onchange="changeActiveAsset()" class="bg-slate-800 text-white text-xs rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-blue-500">
+            <option value="GE-GT-0104">GE-GT-0104: Heavy-Duty Gas Turbine Frame 7HA.03 (Greenville, SC)</option>
+            <option value="GE-CP-0201">GE-CP-0201: Centrifugal Gas Compressor B-4 (Atlanta, GA)</option>
+            <option value="GE-BFP-0302">GE-BFP-0302: Boiler Feed Pump Stage 4 (Schenectady, NY)</option>
+            <option value="GE-WT-0412">GE-WT-0412: Offshore Wind Turbine 2.5MW #12 (Rotterdam, NL)</option>
+            <option value="GE-MTR-0508">GE-MTR-0508: Induction Motor 6.6kV Test Bench (Cincinnati, OH)</option>
+          </select>
+        </div>
+
+        <div class="flex items-center space-x-3 text-xs">
+          <span id="active-asset-plant" class="text-slate-400">Plant: Greenville Gas Plant, SC</span>
+          <span class="text-slate-600">|</span>
+          <span id="active-asset-criticality" class="px-2 py-0.5 rounded bg-blue-900/60 text-blue-400 font-semibold border border-blue-700">Tier 1 (Critical)</span>
+        </div>
+      </div>
+
+      <!-- Top Row: Multi-Horizon Risk & RUL Engine -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Multi-Horizon Probabilities -->
+        <div class="glass-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+              <i data-lucide="bar-chart-3" class="w-4 h-4 text-blue-400"></i>
+              <span>Multi-Horizon Failure Risk</span>
+            </h3>
+            <span id="risk-score-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-900/60 text-amber-400 border border-amber-700">RISK: 54%</span>
+          </div>
+
+          <p class="text-xs text-slate-400">Calibrated Platt Bayesian probabilities across operational horizons:</p>
+
+          <div class="space-y-3">
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-300">24 Hours (Immediate Action)</span>
+                <span id="prob-24h" class="font-bold text-white">12.4%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2">
+                <div id="bar-24h" class="bg-blue-500 h-2 rounded-full" style="width: 12.4%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-300">72 Hours (Urgent Hot Inspection)</span>
+                <span id="prob-72h" class="font-bold text-white">32.8%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2">
+                <div id="bar-72h" class="bg-cyan-500 h-2 rounded-full" style="width: 32.8%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-300 font-semibold text-amber-400">7 Days (Primary Maintenance Target)</span>
+                <span id="prob-7d" class="font-bold text-amber-400">68.2%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2">
+                <div id="bar-7d" class="bg-amber-500 h-2 rounded-full" style="width: 68.2%"></div>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-300">14 Days (Turnaround Planning)</span>
+                <span id="prob-14d" class="font-bold text-red-400">84.5%</span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-2">
+                <div id="bar-14d" class="bg-red-500 h-2 rounded-full" style="width: 84.5%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+            <span>Predicted Failure Mode:</span>
+            <span id="predicted-mode-tag" class="font-bold text-white px-2 py-0.5 rounded bg-slate-800 border border-slate-700">BEARING_SPALLING_FATIGUE</span>
+          </div>
+        </div>
+
+        <!-- Probabilistic Remaining Useful Life (RUL) -->
+        <div class="glass-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+              <i data-lucide="timer" class="w-4 h-4 text-cyan-400"></i>
+              <span>Probabilistic RUL (Uncertainty)</span>
+            </h3>
+            <span class="text-xs text-slate-400">Weibull Hazard Model</span>
+          </div>
+
+          <div class="flex items-center justify-center py-2">
+            <div class="text-center">
+              <div id="rul-days-median" class="text-4xl font-extrabold text-cyan-400">4.2</div>
+              <div class="text-xs text-slate-400 font-medium">Days (P50 Median RUL)</div>
+              <div id="rul-hours-median" class="text-[11px] text-slate-500 mt-0.5">approx. 100.8 operating hours</div>
+            </div>
+          </div>
+
+          <!-- Uncertainty Interval Cards -->
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
+              <span class="text-slate-400 block text-[11px]">P10 (Pessimistic):</span>
+              <strong id="rul-p10" class="text-red-400 text-sm">2.4 Days</strong>
+              <span class="text-[10px] text-slate-500 block">90% survival limit</span>
+            </div>
+            <div class="bg-slate-800/80 p-2.5 rounded-lg border border-slate-700">
+              <span class="text-slate-400 block text-[11px]">P90 (Optimistic):</span>
+              <strong id="rul-p90" class="text-emerald-400 text-sm">7.1 Days</strong>
+              <span class="text-[10px] text-slate-500 block">Under low-load plan</span>
+            </div>
+          </div>
+
+          <div class="bg-blue-950/40 p-2.5 rounded-lg border border-blue-900/60 text-xs">
+            <div class="flex justify-between items-center text-slate-300">
+              <span>Failure Prob before 7d Turnaround:</span>
+              <strong id="prob-before-window" class="text-amber-400">74.5%</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Anomaly & Decision Recommendation -->
+        <div class="glass-card p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+              <i data-lucide="wrench" class="w-4 h-4 text-emerald-400"></i>
+              <span>Prescriptive Action & ROI</span>
+            </h3>
+            <span id="badge-anomaly-status" class="px-2 py-0.5 rounded text-[11px] font-bold bg-red-900/60 text-red-400 border border-red-700">ANOMALY DETECTED</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="text-slate-400">Recommended Engineering Procedure:</div>
+            <div id="rec-action-text" class="p-2.5 rounded-lg bg-slate-800/90 text-white font-medium border border-slate-700">
+              Perform High-Frequency Ultrasonic Scan & Schedule Bearing Replacement
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-slate-800/60 p-2 rounded">
+              <span class="text-slate-400 block text-[10px]">MAINTENANCE WINDOW:</span>
+              <strong id="rec-window" class="text-white text-sm">48 Hours</strong>
+            </div>
+            <div class="bg-slate-800/60 p-2 rounded">
+              <span class="text-slate-400 block text-[10px]">SOP REFERENCE:</span>
+              <strong id="rec-sop" class="text-cyan-400 text-xs">GE-SOP-BRG-402</strong>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-lg bg-emerald-950/30 border border-emerald-800/60 text-xs text-emerald-300 flex items-center justify-between">
+            <div>
+              <span class="block text-[10px] text-emerald-400 uppercase font-semibold">Projected Net Avoided Cost</span>
+              <strong id="rec-roi" class="text-sm font-bold">$438,000 USD</strong>
+            </div>
+            <button onclick="dispatchWorkOrderFromActive()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow">
+              Dispatch SAP PM
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Sensor Telemetry Strip -->
+      <div class="glass-card p-5">
+        <h3 class="text-sm font-bold text-white mb-3 flex items-center space-x-2">
+          <i data-lucide="gauge" class="w-4 h-4 text-cyan-400"></i>
+          <span>Live High-Frequency Sensor Stream (Validated by Data Quality Contracts)</span>
+        </h3>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3" id="sensor-telemetry-grid">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+
+      <!-- Root-Cause SHAP Attribution & 24h Evidence Timeline -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Root Cause Breakdown -->
+        <div class="glass-card p-5 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+            <i data-lucide="search" class="w-4 h-4 text-purple-400"></i>
+            <span>Root-Cause Feature Attributions (SHAP Waterfall)</span>
+          </h3>
+          <p class="text-xs text-slate-400">Key features elevating failure probability above baseline envelope:</p>
+          <div id="shap-attribution-list" class="space-y-2.5 text-xs">
+            <!-- Dynamically populated via JS -->
+          </div>
+        </div>
+
+        <!-- 24h Historical Evidence Trend -->
+        <div class="glass-card p-5 space-y-3">
+          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+            <i data-lucide="trending-up" class="w-4 h-4 text-cyan-400"></i>
+            <span>24-Hour Historical Evidence Window</span>
+          </h3>
+          <p class="text-xs text-slate-400">Observed degradation velocity prior to current prediction timestamp:</p>
+          <div class="h-56">
+            <canvas id="evidenceChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: FAULT SIMULATOR & WHAT-IF -->
+    <!-- ============================================================ -->
+    <div id="view-simulator" class="tab-view hidden space-y-6">
+      <div class="glass-card p-5 border-l-4 border-l-purple-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white">Interactive Operational Simulator & Fault Injection Sandbox</h2>
+            <p class="text-xs text-slate-400">Simulate industrial machine degradations in real time and observe the decision pipeline react.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-purple-900/60 text-purple-300 font-semibold border border-purple-700">Digital Twin Sandbox</span>
+        </div>
+      </div>
+
+      <!-- Fault Injection Buttons -->
+      <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        <button onclick="injectFault('BEARING_DAMAGE')" class="glass-card glass-card-hover p-4 text-left border-slate-700 hover:border-red-500 group">
+          <div class="flex items-center space-x-2 text-red-400 mb-2">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+            <strong class="text-sm">Bearing Spalling</strong>
+          </div>
+          <p class="text-xs text-slate-400">Injects micro-cracking impact spikes: Kurtosis=8.6, RMS=6.4 mm/s, High Acoustic Emission.</p>
+          <div class="mt-3 text-[11px] font-semibold text-red-400 group-hover:underline">Simulate Fault &rarr;</div>
+        </button>
+
+        <button onclick="injectFault('LUBE_FAILURE')" class="glass-card glass-card-hover p-4 text-left border-slate-700 hover:border-amber-500 group">
+          <div class="flex items-center space-x-2 text-amber-400 mb-2">
+            <i data-lucide="droplet" class="w-5 h-5"></i>
+            <strong class="text-sm">Lube Starvation</strong>
+          </div>
+          <p class="text-xs text-slate-400">Drops lube header pressure to 1.3 bar (trip threshold), spikes bearing thermal friction to 92°C.</p>
+          <div class="mt-3 text-[11px] font-semibold text-amber-400 group-hover:underline">Simulate Fault &rarr;</div>
+        </button>
+
+        <button onclick="injectFault('MISALIGNMENT')" class="glass-card glass-card-hover p-4 text-left border-slate-700 hover:border-cyan-500 group">
+          <div class="flex items-center space-x-2 text-cyan-400 mb-2">
+            <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+            <strong class="text-sm">Rotor Misalignment</strong>
+          </div>
+          <p class="text-xs text-slate-400">Elevates 2X rotational harmonic to 3.8 mm/s across flexible coupling shims.</p>
+          <div class="mt-3 text-[11px] font-semibold text-cyan-400 group-hover:underline">Simulate Fault &rarr;</div>
+        </button>
+
+        <button onclick="injectFault('FILTER_CLOG')" class="glass-card glass-card-hover p-4 text-left border-slate-700 hover:border-yellow-500 group">
+          <div class="flex items-center space-x-2 text-yellow-400 mb-2">
+            <i data-lucide="filter" class="w-5 h-5"></i>
+            <strong class="text-sm">Filter Clogging</strong>
+          </div>
+          <p class="text-xs text-slate-400">Spikes differential pressure (ΔP) to 850 mbar, mandating duplex filter changeover.</p>
+          <div class="mt-3 text-[11px] font-semibold text-yellow-400 group-hover:underline">Simulate Fault &rarr;</div>
+        </button>
+
+        <button onclick="injectFault('RESET_NORMAL')" class="glass-card glass-card-hover p-4 text-left border-slate-700 hover:border-emerald-500 group">
+          <div class="flex items-center space-x-2 text-emerald-400 mb-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <strong class="text-sm">Reset to Normal</strong>
+          </div>
+          <p class="text-xs text-slate-400">Restores all sensor values to healthy baseline operating envelope (ISO Zone A).</p>
+          <div class="mt-3 text-[11px] font-semibold text-emerald-400 group-hover:underline">Restore Baseline &rarr;</div>
+        </button>
+      </div>
+
+      <!-- Simulation Output Log -->
+      <div class="glass-card p-5">
+        <h3 class="text-sm font-bold text-white mb-2">Simulation Pipeline Log</h3>
+        <div id="simulation-log" class="bg-slate-950 p-4 rounded-lg font-mono text-xs text-slate-300 h-48 overflow-y-auto space-y-1">
+          <div class="text-slate-500">[SYSTEM READY] Operational simulator initialized. Select a fault injection above to stress test models.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 4: ALERT CENTER & SAP PM -->
+    <!-- ============================================================ -->
+    <div id="view-alerts" class="tab-view hidden space-y-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-base font-bold text-white">Alert Queue & SAP Plant Maintenance (PM) Integration</h2>
+          <p class="text-xs text-slate-400">Engineer acknowledgement, work order dispatch, and closed-loop verified feedback.</p>
+        </div>
+        <button onclick="loadAlertsAndWorkOrders()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-medium text-slate-300 border border-slate-700 flex items-center space-x-1.5">
+          <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          <span>Refresh Records</span>
+        </button>
+      </div>
+
+      <!-- Active Alerts Table -->
+      <div class="glass-card p-5 space-y-4">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i data-lucide="bell" class="w-4 h-4 text-red-400"></i>
+          <span>Governed Operational Alerts</span>
+        </h3>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Alert ID</th>
+                <th class="py-3 px-4">Asset</th>
+                <th class="py-3 px-4">Severity</th>
+                <th class="py-3 px-4">Diagnosed Mode</th>
+                <th class="py-3 px-4">Risk (7d)</th>
+                <th class="py-3 px-4">RUL</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="alerts-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SAP PM Work Orders Table -->
+      <div class="glass-card p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+            <i data-lucide="clipboard-list" class="w-4 h-4 text-blue-400"></i>
+            <span>SAP PM Maintenance Work Orders (Closed-Loop Retraining Feedback)</span>
+          </h3>
+          <span class="text-xs text-slate-400">Integrated with SAP ERP</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-700">
+              <tr>
+                <th class="py-3 px-4">Work Order ID</th>
+                <th class="py-3 px-4">SAP Notif #</th>
+                <th class="py-3 px-4">Asset</th>
+                <th class="py-3 px-4">Priority</th>
+                <th class="py-3 px-4">Assigned Work Center</th>
+                <th class="py-3 px-4">Est. Cost</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Engineer Feedback</th>
+              </tr>
+            </thead>
+            <tbody id="workorders-table-body" class="divide-y divide-slate-800">
+              <!-- Dynamically populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 5: GE COPILOT (RAG ASSISTANT) -->
+    <!-- ============================================================ -->
+    <div id="view-copilot" class="tab-view hidden space-y-6">
+      <div class="glass-card p-5 border-l-4 border-l-purple-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white">GenAI GE Maintenance Copilot (RAG with Citations)</h2>
+            <p class="text-xs text-slate-400">Query approved GE turbine manuals (GEK-10998), ISO vibration standards, and field SOPs.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-purple-900/60 text-purple-300 font-semibold border border-purple-700">Deterministic ML Authority</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Quick Prompts Sidebar -->
+        <div class="glass-card p-4 space-y-3">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Quick Technical Queries</h3>
+          <button onclick="askCopilot('How to inspect Frame 7HA journal bearing clearance and vibration limits?')" class="w-full text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+            Turbine Bearing Clearance & Vibration (GEK-10998)
+          </button>
+          <button onclick="askCopilot('What are the ISO 10816 vibration severity limits and 2X harmonic misalignment rules?')" class="w-full text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+            ISO 10816-3 Vibration Severity Zones
+          </button>
+          <button onclick="askCopilot('What are the lube oil pressure and filter differential pressure troubleshooting rules?')" class="w-full text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+            Lube Header Pressure & Filter ΔP Limits
+          </button>
+          <button onclick="askCopilot('What is the standard sensitivity and calibration for API 670 proximity probes?')" class="w-full text-left p-2.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs text-slate-200 border border-slate-700 transition">
+            API 670 Proximity Probe Gap Voltage
+          </button>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="lg:col-span-3 glass-card p-5 flex flex-col h-[560px]">
+          <div id="copilot-messages" class="flex-1 overflow-y-auto space-y-4 pr-2">
+            <div class="flex items-start space-x-3">
+              <div class="h-8 w-8 rounded bg-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                AI
+              </div>
+              <div class="bg-slate-800/90 p-4 rounded-xl text-xs text-slate-200 border border-slate-700 max-w-2xl leading-relaxed">
+                Welcome to the <strong>GE Industrial Maintenance Copilot</strong>. I am grounded in approved GE Technical Manuals (GEK-10998, GE-LUBE-204), ISO 10816 vibration criteria, and API 670 standards. Select a sample query on the left or type your engineering question below.
+              </div>
+            </div>
+          </div>
+
+          <!-- Input bar -->
+          <div class="pt-4 border-t border-slate-800 flex items-center space-x-2">
+            <input id="copilot-input" type="text" placeholder="Ask about GE turbomachinery, tolerances, vibration harmonics, or LOTO procedures..." 
+              onkeydown="if(event.key === 'Enter') sendCopilotQuery()"
+              class="flex-1 bg-slate-900 text-white text-xs rounded-lg px-4 py-3 border border-slate-700 focus:outline-none focus:border-purple-500">
+            <button onclick="sendCopilotQuery()" class="px-5 py-3 rounded-lg bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs flex items-center space-x-1.5 shadow">
+              <span>Send</span>
+              <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TAB 6: MLOPS & DRIFT GOVERNANCE -->
+    <!-- ============================================================ -->
+    <div id="view-mlops" class="tab-view hidden space-y-6">
+      <div class="glass-card p-5 border-l-4 border-l-cyan-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-base font-bold text-white">MLOps Governance, Lineage & Feature Drift Observability</h2>
+            <p class="text-xs text-slate-400">Model registry, champion vs candidate comparisons, PSI drift metrics, and automated promotion gates.</p>
+          </div>
+          <span class="text-xs px-2.5 py-1 rounded-full bg-cyan-900/60 text-cyan-300 font-semibold border border-cyan-700">MLflow & Great Expectations Active</span>
+        </div>
+      </div>
+
+      <!-- Model Registry Comparison -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Champion -->
+        <div class="glass-card p-5 border-t-4 border-t-emerald-500 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-900/60 text-emerald-400 border border-emerald-700">CHAMPION PRODUCTION</span>
+            <span class="text-xs text-slate-400">100% Traffic</span>
+          </div>
+          <h3 class="text-sm font-bold text-white">Failure Multi-Horizon (v2.4.1)</h3>
+          <p class="text-[11px] text-slate-400">Calibrated XGBoost Ensemble with Platt Sigmoid calibration</p>
+          
+          <div class="space-y-2 pt-2 border-t border-slate-800 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">PR-AUC Score:</span><strong class="text-white">0.942</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Recall @ Target:</span><strong class="text-white">93.8%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Precision:</span><strong class="text-white">91.5%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Brier Calibration:</span><strong class="text-emerald-400">0.042 (Calibrated)</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Lead Time:</span><strong class="text-amber-400">11.2 Days</strong></div>
+          </div>
+        </div>
+
+        <!-- Candidate / Shadow -->
+        <div class="glass-card p-5 border-t-4 border-t-blue-500 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-900/60 text-blue-400 border border-blue-700">SHADOW CANDIDATE</span>
+            <span class="text-xs text-slate-400">Shadow Replay</span>
+          </div>
+          <h3 class="text-sm font-bold text-white">TCN + CatBoost Head (v2.5.0)</h3>
+          <p class="text-[11px] text-slate-400">Temporal Convolutional Network for stateful time-series sequence modeling</p>
+          
+          <div class="space-y-2 pt-2 border-t border-slate-800 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">PR-AUC Score:</span><strong class="text-white">0.954 (+0.012)</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Recall @ Target:</span><strong class="text-white">94.9%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Precision:</span><strong class="text-white">92.8%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Brier Calibration:</span><strong class="text-emerald-400">0.038</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Lead Time:</span><strong class="text-amber-400">12.1 Days</strong></div>
+          </div>
+        </div>
+
+        <!-- Fallback -->
+        <div class="glass-card p-5 border-t-4 border-t-slate-600 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">ACTIVE FALLBACK</span>
+            <span class="text-xs text-slate-400">Hot Standby</span>
+          </div>
+          <h3 class="text-sm font-bold text-white">ISO Engineering Standard (v1.0.0)</h3>
+          <p class="text-[11px] text-slate-400">Deterministic ISO 10816 & API 670 rule safety layer if ML is unreachable</p>
+          
+          <div class="space-y-2 pt-2 border-t border-slate-800 text-xs">
+            <div class="flex justify-between"><span class="text-slate-400">PR-AUC Score:</span><strong class="text-white">0.780</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Recall:</span><strong class="text-white">88.0%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Precision:</span><strong class="text-white">72.0%</strong></div>
+            <div class="flex justify-between"><span class="text-slate-400">Failover Latency:</span><strong class="text-emerald-400">&lt; 5 ms</strong></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Drift Table (PSI) -->
+      <div class="glass-card p-5 space-y-3">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i data-lucide="activity" class="w-4 h-4 text-cyan-400"></i>
+          <span>Live Feature Drift Metrics (Population Stability Index - PSI)</span>
+        </h3>
+        <p class="text-xs text-slate-400">Evaluates statistical drift against historical training baseline distributions:</p>
+
+        <div id="psi-drift-container" class="space-y-2 text-xs">
+          <!-- Dynamically populated via JS -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- WORK ORDER FEEDBACK MODAL -->
+  <div id="feedback-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card p-6 max-w-md w-full border-slate-700 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-white flex items-center space-x-2">
+          <i data-lucide="check-square" class="w-4 h-4 text-emerald-400"></i>
+          <span>Submit Maintenance Outcome</span>
+        </h3>
+        <button onclick="closeFeedbackModal()" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+
+      <p class="text-xs text-slate-400">Record verified physical inspection results. This closes the feedback loop and updates the label store without data leakage.</p>
+
+      <input type="hidden" id="modal-wo-id">
+      <input type="hidden" id="modal-asset-id">
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Inspection Outcome:</label>
+          <select id="modal-outcome" class="w-full bg-slate-800 text-white rounded p-2 border border-slate-700">
+            <option value="TRUE_POSITIVE_FAILURE">Verified Defect / True Failure Detected</option>
+            <option value="PREVENTED_DEGRADATION">Prevented Escalation (Early Stage Fix)</option>
+            <option value="FALSE_ALERT_NO_DEFECT">False Alert / No Defect Found</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Confirmed Failure Mechanism:</label>
+          <select id="modal-confirmed-mode" class="w-full bg-slate-800 text-white rounded p-2 border border-slate-700">
+            <option value="BEARING_SPALLING_FATIGUE">Bearing Spalling / Fatigue Pitting</option>
+            <option value="THERMAL_OVERHEATING">Thermal Overheating / Oil Degradation</option>
+            <option value="LUBRICATION_STARVATION">Lubrication Starvation / Filter Clog</option>
+            <option value="ROTOR_IMBALANCE_MISALIGNMENT">Shaft Misalignment & Imbalance</option>
+            <option value="SEAL_LEAKAGE_PRESSURE_LOSS">Dry Gas Seal Leakage</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-semibold mb-1">Technician Findings & Serial Numbers:</label>
+          <textarea id="modal-findings" rows="3" class="w-full bg-slate-800 text-white rounded p-2 border border-slate-700" placeholder="e.g. Outer ring spalling verified on journal bearing #2. Replaced with SKF 23152..."></textarea>
+        </div>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeFeedbackModal()" class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300">Cancel</button>
+        <button onclick="submitOutcomeFeedback()" class="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold">Save to Label Store</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APP LOGIC -->
+  <script>
+    // State
+    let currentAssetId = 'GE-GT-0104';
+    let evidenceChart = null;
+    let noticeTimer = null;
+
+    async function apiJson(url, options) {
+      const response = await fetch(url, options);
+      const data = await response.json();
+      if (!response.ok) {
+        const detail = typeof data.detail === 'string'
+          ? data.detail
+          : data.detail?.message || `Request failed (${response.status})`;
+        throw new Error(detail);
+      }
+      return data;
+    }
+
+    function showNotice(message, isError = false) {
+      const notice = document.getElementById('app-notice');
+      notice.textContent = message;
+      notice.className = `mx-6 mt-4 rounded-lg border px-4 py-3 text-sm ${
+        isError
+          ? 'border-red-800 bg-red-950/70 text-red-200'
+          : 'border-emerald-800 bg-emerald-950/60 text-emerald-200'
+      }`;
+      if (noticeTimer) clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => {
+        notice.textContent = '';
+        notice.className = 'hidden';
+      }, 5000);
+    }
+
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-view').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/40', 'font-semibold');
+        btn.classList.add('text-slate-400', 'font-medium');
+      });
+
+      const activeView = document.getElementById(`view-${tabId}`);
+      const activeBtn = document.getElementById(`tab-${tabId}`);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.remove('text-slate-400', 'font-medium');
+        activeBtn.classList.add('bg-blue-600/20', 'text-blue-400', 'border', 'border-blue-500/40', 'font-semibold');
+      }
+
+      if (tabId === 'asset') loadAssetDetail(currentAssetId);
+      if (tabId === 'alerts') loadAlertsAndWorkOrders();
+      if (tabId === 'mlops') loadDriftMetrics();
+    }
+
+    // Load Fleet Data
+    async function loadFleetData() {
+      try {
+        const data = await apiJson('/v1/fleet');
+        document.getElementById('kpi-savings').textContent =
+          `$${Number(data.annual_cost_savings_usd).toLocaleString()}`;
+        document.getElementById('kpi-downtime').textContent =
+          `${data.unplanned_downtime_reduction_pct}% illustrative reduction`;
+        document.getElementById('kpi-assets').textContent =
+          `${data.active_monitored_nodes} sample assets`;
+        document.getElementById('kpi-plants').textContent =
+          `${data.plants_connected} sample sites`;
+        
+        const tbody = document.getElementById('fleet-table-body');
+        tbody.innerHTML = '';
+
+        data.assets.forEach(asset => {
+          let statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-900/60 text-emerald-400 border border-emerald-700">HEALTHY</span>';
+          if (asset.status === 'CRITICAL') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-900/60 text-red-400 border border-red-700">CRITICAL</span>';
+          } else if (asset.status === 'WARNING') {
+            statusBadge = '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-900/60 text-amber-400 border border-amber-700">WARNING</span>';
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition cursor-pointer';
+          tr.dataset.search = `${asset.asset_id} ${asset.asset_name} ${asset.plant_name} ${asset.asset_family} ${asset.status}`.toLowerCase();
+          tr.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON') {
+              selectAssetAndInspect(asset.asset_id);
+            }
+          };
+
+          tr.innerHTML = `
+            <td class="py-3 px-4">
+              <strong class="text-white">${asset.asset_id}</strong>
+              <div class="text-[11px] text-slate-400">${asset.asset_name}</div>
+            </td>
+            <td class="py-3 px-4 text-slate-300">${asset.plant_name}</td>
+            <td class="py-3 px-4">
+              <span class="text-slate-300 font-medium">${asset.asset_family}</span>
+              <div class="text-[10px] text-slate-500">${asset.criticality}</div>
+            </td>
+            <td class="py-3 px-4">
+              <div class="font-bold ${asset.health_score > 75 ? 'text-emerald-400' : (asset.health_score > 50 ? 'text-amber-400' : 'text-red-400')}">
+                ${asset.health_score} / 100
+              </div>
+            </td>
+            <td class="py-3 px-4 font-semibold ${asset.p_fail_7d > 0.5 ? 'text-red-400' : 'text-slate-300'}">
+              ${(asset.p_fail_7d * 100).toFixed(1)}%
+            </td>
+            <td class="py-3 px-4 font-bold text-cyan-400">
+              ${asset.rul_days} Days
+            </td>
+            <td class="py-3 px-4">${statusBadge}</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="selectAssetAndInspect('${asset.asset_id}')" class="px-2.5 py-1 rounded bg-blue-600/30 hover:bg-blue-600 text-blue-300 hover:text-white text-[11px] font-medium border border-blue-500/50 transition">
+                Inspect Twin &rarr;
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        filterFleetRows();
+
+      } catch (err) {
+        console.error('Error loading fleet:', err);
+        showNotice(`Could not load fleet data: ${err.message}`, true);
+      }
+    }
+
+    function filterFleetRows() {
+      const query = document.getElementById('fleet-search').value.trim().toLowerCase();
+      document.querySelectorAll('#fleet-table-body tr').forEach(row => {
+        row.hidden = !row.dataset.search.includes(query);
+      });
+    }
+
+    function selectAssetAndInspect(assetId) {
+      currentAssetId = assetId;
+      document.getElementById('asset-selector').value = assetId;
+      switchTab('asset');
+    }
+
+    function changeActiveAsset() {
+      currentAssetId = document.getElementById('asset-selector').value;
+      loadAssetDetail(currentAssetId);
+    }
+
+    // Load Asset Digital Twin Detail
+    async function loadAssetDetail(assetId) {
+      try {
+        // Fetch health & explanation
+        const [health, explain] = await Promise.all([
+          apiJson(`/v1/assets/${encodeURIComponent(assetId)}/health`),
+          apiJson(`/v1/assets/${encodeURIComponent(assetId)}/explanation`)
+        ]);
+
+        // Update Header
+        document.getElementById('active-asset-plant').textContent = `Plant: ${health.plant_name}`;
+        document.getElementById('active-asset-criticality').textContent = health.criticality;
+
+        // Multi-Horizon Risk & Failure Mode
+        const riskPct = health.calibrated_risk_score;
+        document.getElementById('risk-score-badge').textContent = `RISK: ${riskPct.toFixed(0)}%`;
+        
+        ['24h', '72h', '7d', '14d'].forEach(horizon => {
+          const probability = health.horizon_probabilities[horizon];
+          const percent = Math.max(0, Math.min(100, probability * 100));
+          document.getElementById(`prob-${horizon}`).textContent = `${percent.toFixed(1)}%`;
+          document.getElementById(`bar-${horizon}`).style.width = `${percent.toFixed(1)}%`;
+        });
+
+        document.getElementById('predicted-mode-tag').textContent = health.primary_failure_mode || 'NORMAL_OPERATION';
+
+        // RUL
+        document.getElementById('rul-days-median').textContent = health.rul_days_p50;
+        document.getElementById('rul-hours-median').textContent = `approx. ${(health.rul_days_p50 * 24).toFixed(0)} operating hours`;
+        document.getElementById('rul-p10').textContent = `${health.rul_days_p10.toFixed(1)} Days`;
+        document.getElementById('rul-p90').textContent = `${health.rul_days_p90.toFixed(1)} Days`;
+        document.getElementById('prob-before-window').textContent =
+          `${(health.failure_probability_before_window * 100).toFixed(1)}%`;
+
+        // Recommendation
+        document.getElementById('rec-action-text').textContent = health.recommended_action;
+        document.getElementById('rec-window').textContent = `${health.maintenance_window_hours} Hours`;
+
+        const anomBadge = document.getElementById('badge-anomaly-status');
+        if (health.anomaly_score > 65.0) {
+          anomBadge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-red-900/60 text-red-400 border border-red-700';
+          anomBadge.textContent = `ANOMALY SCORE: ${health.anomaly_score}`;
+        } else {
+          anomBadge.className = 'px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-900/60 text-emerald-400 border border-emerald-700';
+          anomBadge.textContent = 'TELEMETRY NOMINAL';
+        }
+
+        // Live Sensors Grid
+        renderSensorGrid(assetId);
+
+        // SHAP Attribution
+        renderShapAttributions(explain.feature_attributions);
+
+        // Evidence Window Chart
+        renderEvidenceChart(explain.evidence_window);
+
+      } catch (err) {
+        console.error('Error loading asset detail:', err);
+        showNotice(`Could not load asset details: ${err.message}`, true);
+      }
+    }
+
+    async function renderSensorGrid(assetId) {
+      const container = document.getElementById('sensor-telemetry-grid');
+      container.innerHTML = '';
+      
+      const fleetData = await apiJson('/v1/fleet');
+      const current = fleetData.assets.find(a => a.asset_id === assetId);
+      if (!current) return;
+
+      const displayTags = [
+        { key: 'vib_drive_end_rms', label: 'DE Vibration RMS', unit: 'mm/s', warn: 4.5 },
+        { key: 'vib_peak_to_peak', label: 'Peak-to-Peak', unit: 'µm', warn: 70.0 },
+        { key: 'vib_kurtosis', label: 'Vib Kurtosis', unit: 'dim', warn: 4.2 },
+        { key: 'temp_bearing_drive_end', label: 'DE Bearing Temp', unit: '°C', warn: 80.0 },
+        { key: 'press_lube_oil_bar', label: 'Lube Oil Press', unit: 'bar', warnLow: 2.0 },
+        { key: 'acoustic_emission_db', label: 'Acoustic Emission', unit: 'dB', warn: 65.0 }
+      ];
+
+      displayTags.forEach(t => {
+        const val = current.sensors[t.key] !== undefined ? current.sensors[t.key] : 0.0;
+        let isHigh = t.warn && val >= t.warn;
+        let isLow = t.warnLow && val <= t.warnLow;
+        let isWarn = isHigh || isLow;
+
+        const card = document.createElement('div');
+        card.className = `p-3 rounded-lg border ${isWarn ? 'bg-red-950/30 border-red-800/80 text-red-300' : 'bg-slate-800/60 border-slate-700 text-slate-200'}`;
+        card.innerHTML = `
+          <div class="text-[10px] text-slate-400 font-medium uppercase truncate">${t.label}</div>
+          <div class="text-lg font-bold mt-1">${val.toFixed(1)} <span class="text-xs font-normal text-slate-400">${t.unit}</span></div>
+          <div class="text-[10px] mt-0.5 ${isWarn ? 'text-red-400 font-semibold' : 'text-slate-500'}">
+            ${isWarn ? 'ALERT EXCEEDED' : 'Normal Envelope'}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderShapAttributions(attributions) {
+      const container = document.getElementById('shap-attribution-list');
+      container.innerHTML = '';
+
+      attributions.forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'p-2.5 rounded bg-slate-800/70 border border-slate-700/80';
+        el.innerHTML = `
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-white">${item.feature}</span>
+            <span class="font-semibold ${item.direction === 'INCREASED_RISK' ? 'text-red-400' : 'text-emerald-400'}">
+              +${item.impact_percent}% Attribution
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-400">${item.detail}</p>
+        `;
+        container.appendChild(el);
+      });
+    }
+
+    function renderEvidenceChart(timeline) {
+      const ctx = document.getElementById('evidenceChart').getContext('2d');
+      if (evidenceChart) evidenceChart.destroy();
+
+      const labels = timeline.map(p => p.timestamp);
+      const vibData = timeline.map(p => p.vib_de_rms);
+      const tempData = timeline.map(p => p.temp_bearing);
+
+      evidenceChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'DE Vibration RMS (mm/s)',
+              data: vibData,
+              borderColor: '#38bdf8',
+              backgroundColor: 'rgba(56, 189, 248, 0.1)',
+              yAxisID: 'yVib',
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: 'Bearing Temp (°C)',
+              data: tempData,
+              borderColor: '#f59e0b',
+              backgroundColor: 'transparent',
+              yAxisID: 'yTemp',
+              tension: 0.3,
+              borderDash: [4, 4]
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: { color: '#cbd5e1', font: { size: 10 } }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#94a3b8', font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            yVib: {
+              type: 'linear',
+              position: 'left',
+              ticks: { color: '#38bdf8', font: { size: 9 } },
+              grid: { color: 'rgba(255,255,255,0.05)' }
+            },
+            yTemp: {
+              type: 'linear',
+              position: 'right',
+              ticks: { color: '#f59e0b', font: { size: 9 } },
+              grid: { drawOnChartArea: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Operational Simulator Fault Injection
+    async function injectFault(faultType) {
+      const log = document.getElementById('simulation-log');
+      const timeStr = new Date().toLocaleTimeString();
+      
+      try {
+      const data = await apiJson('/v1/simulate/fault', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset_id: currentAssetId, fault_type: faultType })
+      });
+
+      const logEntry = document.createElement('div');
+      logEntry.innerHTML = `<span class="text-purple-400">[${timeStr}]</span> Injected <strong>${faultType}</strong> into ${currentAssetId}: <span class="text-amber-300">${data.description}</span>`;
+      log.prepend(logEntry);
+
+      // Trigger multi-horizon prediction & reload
+      await apiJson('/v1/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ asset_id: currentAssetId, sensors: data.updated_sensors })
+      });
+
+      await loadFleetData();
+      if (!document.getElementById('view-asset').classList.contains('hidden')) {
+        await loadAssetDetail(currentAssetId);
+      }
+      showNotice(`${faultType} simulated for ${currentAssetId}.`);
+      } catch (err) {
+        showNotice(`Simulation failed: ${err.message}`, true);
+      }
+    }
+
+    // Alerts & Work Orders
+    async function loadAlertsAndWorkOrders() {
+      try {
+        const [alerts, workOrders] = await Promise.all([
+          apiJson('/v1/alerts'),
+          apiJson('/v1/work-orders')
+        ]);
+
+        // Update badge count
+        document.getElementById('badge-alert-count').textContent = alerts.filter(a => a.status === 'OPEN').length;
+
+        // Alerts Table
+        const altTbody = document.getElementById('alerts-table-body');
+        altTbody.innerHTML = '';
+        alerts.forEach(alt => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold text-white">${alt.alert_id}</td>
+            <td class="py-3 px-4">
+              <strong class="text-white">${alt.asset_id}</strong>
+              <div class="text-[10px] text-slate-400">${alt.asset_name || ''}</div>
+            </td>
+            <td class="py-3 px-4">
+              <span class="px-2 py-0.5 rounded font-bold text-[10px] ${alt.severity.includes('P1') ? 'bg-red-900/60 text-red-400 border border-red-700' : 'bg-amber-900/60 text-amber-400 border border-amber-700'}">
+                ${alt.severity}
+              </span>
+            </td>
+            <td class="py-3 px-4 text-slate-300">${alt.failure_mode}</td>
+            <td class="py-3 px-4 font-semibold text-amber-400">${((alt.p_fail_7d || 0.6) * 100).toFixed(0)}%</td>
+            <td class="py-3 px-4 font-bold text-cyan-400">${alt.rul_days || 4.2}d</td>
+            <td class="py-3 px-4">
+              <span class="text-[11px] font-semibold ${alt.status === 'OPEN' ? 'text-red-400' : 'text-emerald-400'}">${alt.status}</span>
+            </td>
+            <td class="py-3 px-4 text-right space-x-1">
+              ${alt.status === 'OPEN' ? `
+                <button onclick="ackAlert('${alt.alert_id}')" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-slate-200 text-[10px]">Acknowledge</button>
+                <button onclick="dispatchWorkOrder('${alt.asset_id}', '${alt.alert_id}', '${alt.failure_mode}', '${alt.recommended_action}')" class="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-semibold">Dispatch WO</button>
+              ` : `<span class="text-[10px] text-slate-500">Processed</span>`}
+            </td>
+          `;
+          altTbody.appendChild(tr);
+        });
+
+        // Work Orders Table
+        const woTbody = document.getElementById('workorders-table-body');
+        woTbody.innerHTML = '';
+        workOrders.forEach(wo => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-bold text-cyan-400">${wo.work_order_id}</td>
+            <td class="py-3 px-4 font-mono text-slate-400">${wo.sap_notification_id}</td>
+            <td class="py-3 px-4 text-white font-medium">${wo.asset_id}</td>
+            <td class="py-3 px-4"><span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-amber-400">${wo.priority}</span></td>
+            <td class="py-3 px-4 text-slate-300">${wo.assigned_work_center}</td>
+            <td class="py-3 px-4 text-emerald-400 font-semibold">$${wo.estimated_cost_usd}</td>
+            <td class="py-3 px-4"><span class="text-[11px] font-bold ${wo.status === 'COMPLETED' ? 'text-emerald-400' : 'text-blue-400'}">${wo.status}</span></td>
+            <td class="py-3 px-4 text-right">
+              ${wo.status !== 'COMPLETED' ? `
+                <button onclick="openFeedbackModal('${wo.work_order_id}', '${wo.asset_id}')" class="px-2.5 py-1 rounded bg-emerald-600/30 hover:bg-emerald-600 text-emerald-300 hover:text-white text-[11px] font-medium border border-emerald-500/40 transition">
+                  Submit Feedback &rarr;
+                </button>
+              ` : `<span class="text-[10px] text-emerald-400 font-semibold">Feedback Captured (Retrained)</span>`}
+            </td>
+          `;
+          woTbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        console.error('Error loading alerts:', err);
+        showNotice(`Could not load maintenance records: ${err.message}`, true);
+      }
+    }
+
+    async function ackAlert(alertId) {
+      try {
+        await apiJson(`/v1/alerts/${encodeURIComponent(alertId)}/ack`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ engineer_id: 'ENG-GE-8421' })
+        });
+        await loadAlertsAndWorkOrders();
+        showNotice(`Alert ${alertId} acknowledged.`);
+      } catch (err) {
+        showNotice(`Could not acknowledge alert: ${err.message}`, true);
+      }
+    }
+
+    async function dispatchWorkOrder(assetId, alertId, failureMode, action) {
+      try {
+        const order = await apiJson('/v1/work-orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            asset_id: assetId,
+            alert_id: alertId,
+            failure_mode: failureMode,
+            priority: 'HIGH',
+            recommended_action: action,
+            maintenance_window_hours: 48,
+            assigned_work_center: 'WC-MECH-TURBO-01',
+            notes: 'Dispatched from AI Predictive Maintenance Alert Center'
+          })
+        });
+        await loadAlertsAndWorkOrders();
+        showNotice(`Work order ${order.work_order_id} created.`);
+      } catch (err) {
+        showNotice(`Could not create work order: ${err.message}`, true);
+      }
+    }
+
+    async function dispatchWorkOrderFromActive() {
+      await dispatchWorkOrder(currentAssetId, null, 'BEARING_SPALLING_FATIGUE', 'Perform High-Frequency Ultrasonic Scan & Schedule Bearing Replacement');
+    }
+
+    // Feedback Modal
+    function openFeedbackModal(woId, assetId) {
+      document.getElementById('modal-wo-id').value = woId;
+      document.getElementById('modal-asset-id').value = assetId;
+      document.getElementById('feedback-modal').classList.remove('hidden');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.add('hidden');
+    }
+
+    async function submitOutcomeFeedback() {
+      const woId = document.getElementById('modal-wo-id').value;
+      const assetId = document.getElementById('modal-asset-id').value;
+      const outcome = document.getElementById('modal-outcome').value;
+      const confirmedMode = document.getElementById('modal-confirmed-mode').value;
+      const findings = document.getElementById('modal-findings').value;
+
+      if (!findings.trim()) {
+        showNotice('Enter technician findings before saving feedback.', true);
+        return;
+      }
+      try {
+        await apiJson(`/v1/work-orders/${encodeURIComponent(woId)}/feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            asset_id: assetId,
+            actual_outcome: outcome,
+            confirmed_failure_mode: confirmedMode,
+            technician_findings: findings.trim(),
+            parts_replaced: ['Bearing SKF 23152', 'Oil Seal Viton']
+          })
+        });
+        closeFeedbackModal();
+        await loadAlertsAndWorkOrders();
+        showNotice(`Feedback recorded for ${woId}.`);
+      } catch (err) {
+        showNotice(`Could not save feedback: ${err.message}`, true);
+      }
+    }
+
+    // Copilot Chat
+    async function askCopilot(query) {
+      document.getElementById('copilot-input').value = query;
+      sendCopilotQuery();
+    }
+
+    async function sendCopilotQuery() {
+      const input = document.getElementById('copilot-input');
+      const query = input.value.trim();
+      if (!query) return;
+
+      const container = document.getElementById('copilot-messages');
+
+      // User Message
+      const userMsg = document.createElement('div');
+      userMsg.className = 'flex items-start justify-end space-x-3';
+      const userText = document.createElement('div');
+      userText.className = 'bg-blue-600 p-3 rounded-xl text-xs text-white max-w-xl leading-relaxed whitespace-pre-wrap';
+      userText.textContent = query;
+      const userBadge = document.createElement('div');
+      userBadge.className = 'h-8 w-8 rounded bg-slate-700 flex items-center justify-center text-white font-bold text-xs shrink-0';
+      userBadge.textContent = 'YOU';
+      userMsg.append(userText, userBadge);
+      container.appendChild(userMsg);
+      input.value = '';
+      container.scrollTop = container.scrollHeight;
+
+      // Loading bubble
+      const loading = document.createElement('div');
+      loading.className = 'flex items-start space-x-3';
+      loading.innerHTML = `
+        <div class="h-8 w-8 rounded bg-purple-600 flex items-center justify-center text-white font-bold text-xs shrink-0">AI</div>
+        <div class="bg-slate-800 p-3 rounded-xl text-xs text-slate-400">Retrieving GE Technical Documentation & Procedures...</div>
+      `;
+      container.appendChild(loading);
+      container.scrollTop = container.scrollHeight;
+
+      try {
+        const data = await apiJson('/v1/copilot/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query, asset_id: currentAssetId })
+        });
+        container.removeChild(loading);
+
+        // Copilot Message with Citations
+        const aiMsg = document.createElement('div');
+        aiMsg.className = 'flex items-start space-x-3';
+        const aiBadge = document.createElement('div');
+        aiBadge.className = 'h-8 w-8 rounded bg-purple-600 flex items-center justify-center text-white font-bold text-xs shrink-0';
+        aiBadge.textContent = 'AI';
+        const messageBody = document.createElement('div');
+        messageBody.className = 'bg-slate-800/90 p-4 rounded-xl text-xs text-slate-200 border border-slate-700 max-w-2xl leading-relaxed space-y-3';
+        const responseText = document.createElement('div');
+        responseText.className = 'whitespace-pre-wrap';
+        responseText.textContent = data.response;
+        const citations = document.createElement('div');
+        citations.className = 'pt-2 border-t border-slate-700 text-[11px] text-purple-300';
+        const citationLabel = document.createElement('strong');
+        citationLabel.textContent = 'Verified Citations: ';
+        citations.appendChild(citationLabel);
+        data.citations.forEach(citation => {
+          const item = document.createElement('span');
+          item.className = 'bg-purple-950/60 px-2 py-0.5 rounded border border-purple-800 mr-1';
+          item.textContent = citation.citation;
+          citations.appendChild(item);
+        });
+        messageBody.append(responseText, citations);
+        aiMsg.append(aiBadge, messageBody);
+        container.appendChild(aiMsg);
+        container.scrollTop = container.scrollHeight;
+
+      } catch (err) {
+        console.error('Copilot query error:', err);
+        if (loading.isConnected) loading.remove();
+        showNotice(`Copilot request failed: ${err.message}`, true);
+      }
+    }
+
+    // Load MLOps Drift Metrics
+    async function loadDriftMetrics() {
+      try {
+        const data = await apiJson(`/v1/mlops/drift?asset_id=${encodeURIComponent(currentAssetId)}`);
+
+        const container = document.getElementById('psi-drift-container');
+        container.innerHTML = '';
+
+        Object.keys(data.features).forEach(k => {
+          const item = data.features[k];
+          let statusBadge = '<span class="text-emerald-400 font-semibold">STABLE</span>';
+          if (item.status === 'CRITICAL_DRIFT') {
+            statusBadge = '<span class="text-red-400 font-bold">CRITICAL SHIFT</span>';
+          } else if (item.status === 'MODERATE_DRIFT') {
+            statusBadge = '<span class="text-amber-400 font-semibold">MODERATE DRIFT</span>';
+          }
+
+          const div = document.createElement('div');
+          div.className = 'p-3 rounded-lg bg-slate-800/60 border border-slate-700 flex items-center justify-between';
+          div.innerHTML = `
+            <div>
+              <strong class="text-white">${k}</strong>
+              <div class="text-[11px] text-slate-400">Baseline Mean: ${item.baseline_mean} | Current Live Stream: ${item.current_value}</div>
+            </div>
+            <div class="text-right">
+              <div class="font-mono font-bold text-white text-sm">PSI: ${item.psi_score}</div>
+              <div class="text-[10px]">${statusBadge}</div>
+            </div>
+          `;
+          container.appendChild(div);
+        });
+
+      } catch (err) {
+        console.error('Error loading drift:', err);
+        showNotice(`Could not load drift metrics: ${err.message}`, true);
+      }
+    }
+
+    // Init
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadFleetData();
+    });
+  </script>
+</body>
+</html>
