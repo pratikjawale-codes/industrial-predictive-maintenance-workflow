@@ -2,6 +2,8 @@
 
 A local FastAPI demonstration of an industrial predictive-maintenance workflow. It combines a five-asset in-memory fleet, telemetry validation, feature extraction, illustrative risk/RUL/anomaly models, alert decisions, simulated SAP PM work orders, technician feedback, and a browser dashboard.
 
+This project is licensed under the [MIT License](./LICENSE).
+
 > **Scope:** This repository is a prototype, not a production GE system. Fleet data, model metrics, manual citations, SAP behavior, and savings figures are illustrative. State is held in process memory and resets on restart. It does not connect to plant equipment, SAP, a model-serving platform, Kafka, or a real generative-AI service.
 
 ## Start
